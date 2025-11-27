@@ -1,0 +1,7 @@
+enabled: true
+debounce_delay: 500
+enabled_content_types: []
+preview_breakpoints:
+  mobile: 375
+  tablet: 768
+  desktop: 1200

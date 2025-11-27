@@ -1,0 +1,10 @@
+name: 'Paragraphs Live Preview'
+type: module
+description: 'Provides real-time live preview for Paragraphs while editing content.'
+package: Content
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - paragraphs:paragraphs
+
+configure: paragraphs_live_preview.settings

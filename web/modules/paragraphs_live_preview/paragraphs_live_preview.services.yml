@@ -1,0 +1,7 @@
+services:
+  paragraphs_live_preview.renderer:
+    class: Drupal\paragraphs_live_preview\Service\PreviewRenderer
+    arguments:
+      - '@entity_type.manager'
+      - '@renderer'
+      - '@theme.manager'

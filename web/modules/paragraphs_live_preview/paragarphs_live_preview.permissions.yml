@@ -1,0 +1,8 @@
+use paragraphs live preview:
+  title: 'Use Paragraphs Live Preview'
+  description: 'Allows users to see live preview while editing content'
+
+administer paragraphs live preview:
+  title: 'Administer Paragraphs Live Preview'
+  description: 'Configure settings for Paragraphs Live Preview'
+  restrict access: true

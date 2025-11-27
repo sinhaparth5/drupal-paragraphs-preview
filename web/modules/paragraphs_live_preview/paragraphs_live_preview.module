@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for Paragraphs Live Preview module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_alter()
+ */
+function paragraphs_live_preview_form_alter(&$form, FormStateInterface $form_state, $form_id): void {
+  // Only alter node edit forms
+  if (!preg_match('/^node_.*_form$/', $form_id)) {
+    return;
+  }
+
+  $config = \Drupal::config('paragraphs_live_preview.settings');
+
+  if (!$config->get('enabled')) { return; }
+
+  // Attach library
+
+  //Add settings to drupalSettings
+  $form['#attached']['drupalSettings']['paragraphsLivePreview'] = [
+    'enabled' => TRUE,
+    'debounceDelay' => $config->get('debounceDelay') ?? 500,
+    'previewUrl' => \Drupal::service('url_generator')->generateFromRoute(
+      'paragraphs_live_preview.preview',
+      [],
+      ['absolute' => TRUE]
+    ),
+  ];
+}

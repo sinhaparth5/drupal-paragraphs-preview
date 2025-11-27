@@ -1,0 +1,17 @@
+paragraphs_live_preview.preview:
+  path: '/paragraphs-live-preview/preview'
+  defaults:
+    _controller: '\Drupal\paragraphs_live_preview\Controller\PreviewController::preview'
+    _title: 'Live Preview'
+  requirements:
+    _permission: 'use paragraphs live preview'
+  options:
+    no_cache: true
+
+paragraphs_live_preview.settings:
+  path: '/admin/config/content/paragraphs_live_preview'
+  defaults:
+    _form: '\Drupal\paragraphs_live_preview\Form\SettingsForm'
+    _title: 'Paragraphs Live Preview Settings'
+  requirements:
+    _permission: 'administer paragraphs live preview'

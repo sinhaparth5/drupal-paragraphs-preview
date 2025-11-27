@@ -1,0 +1,11 @@
+live_preview:
+  js:
+    js/live-preview.js: {}
+  css:
+    theme:
+      css/live-preview.css: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+    - core/jquery.once

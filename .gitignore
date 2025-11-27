@@ -1,0 +1,17 @@
+# Minimal but very effective .gitignore for most Drupal projects
+/vendor
+/web/core
+/web/modules/contrib
+/web/themes/contrib
+/web/profiles/contrib
+/web/libraries
+/node_modules
+
+sites/*/files
+sites/*/private
+
+sites/*/settings.local.php
+.env
+
+.vscode
+.idea
