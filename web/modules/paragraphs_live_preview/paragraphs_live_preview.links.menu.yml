@@ -1,0 +1,6 @@
+paragraphs_live_preview.settings:
+  title: 'Paragraphs Live Preview'
+  description: 'Configure live preview settings for Paragraphs'
+  route_name: paragraphs_live_preview.settings
+  parent: system.admin_config_content
+  weight: 10

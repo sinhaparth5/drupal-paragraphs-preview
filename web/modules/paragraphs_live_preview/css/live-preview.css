@@ -3,6 +3,7 @@
  * Styles for Paragraphs Live Preview.
  */
 
+/* Preview Pane - Fixed positioning on right side */
 .live-preview-pane {
   position: fixed;
   top: 0;
@@ -11,55 +12,70 @@
   height: 100vh;
   background: #f5f5f5;
   border-left: 2px solid #ddd;
-  z-index: 1000;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Hidden state - slides out to the right */
 .live-preview-pane.hidden {
   transform: translateX(100%);
 }
 
+/* Toolbar at the top */
 .preview-toolbar {
   background: #333;
   color: #fff;
-  padding: 10px 15px;
+  padding: 15px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  gap: 15px;
 }
 
+/* Toggle Preview Button */
 .preview-toggle-btn {
   background: #0074bd;
   color: #fff;
   border: none;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .preview-toggle-btn:hover {
   background: #005fa3;
 }
 
+.preview-toggle-btn:active {
+  background: #004a7f;
+}
+
+/* Breakpoint buttons container */
 .preview-breakpoints {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
+/* Individual breakpoint buttons */
 .breakpoint-btn {
   background: #555;
   color: #fff;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 
 .breakpoint-btn:hover {
@@ -70,18 +86,22 @@
   background: #0074bd;
 }
 
+/* Loading Indicator */
 .preview-loading {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
-  padding: 15px 30px;
+  padding: 20px 40px;
   border-radius: 4px;
   z-index: 10;
+  font-size: 14px;
+  font-weight: 500;
 }
 
+/* Preview Iframe */
 .preview-iframe {
   flex: 1;
   width: 100%;
@@ -92,7 +112,100 @@
   display: block;
 }
 
+/* Error messages */
+.preview-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #d32f2f;
+  color: #fff;
+  padding: 20px 30px;
+  border-radius: 4px;
+  z-index: 100;
+  font-size: 14px;
+  max-width: 80%;
+  text-align: center;
+}
+
+/* Adjust for Drupal admin toolbar */
 body.toolbar-fixed .live-preview-pane {
   top: 79px;
   height: calc(100vh - 79px);
+}
+
+body.toolbar-fixed.toolbar-horizontal .live-preview-pane {
+  top: 39px;
+  height: calc(100vh - 39px);
+}
+
+body.toolbar-fixed.toolbar-vertical .live-preview-pane {
+  top: 39px;
+  height: calc(100vh - 39px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .live-preview-pane {
+    width: 40%;
+  }
+}
+
+@media (max-width: 768px) {
+  .live-preview-pane {
+    width: 100%;
+  }
+
+  .preview-toolbar {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+/* Make sure it's visible above everything */
+.live-preview-pane {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Floating toggle button - always visible on right side */
+.preview-floating-toggle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #0074bd;
+  color: #fff;
+  border: none;
+  padding: 15px 8px;
+  border-radius: 4px 0 0 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10000;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.preview-floating-toggle:hover {
+  background: #005fa3;
+  padding-left: 12px;
+}
+
+.preview-floating-toggle:active {
+  background: #004a7f;
+}
+
+/* Hide floating button when preview is open */
+.live-preview-pane:not(.hidden) ~ .preview-floating-toggle {
+  display: none;
+}
+
+/* Adjust for admin toolbar */
+body.toolbar-fixed .preview-floating-toggle {
+  top: calc(50% + 40px);
 }

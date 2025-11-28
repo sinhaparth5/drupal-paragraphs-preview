@@ -11,16 +11,18 @@ use Drupal\Core\Form\FormStateInterface;
  * Implements hook_form_alter()
  */
 function paragraphs_live_preview_form_alter(&$form, FormStateInterface $form_state, $form_id): void {
+  \Drupal::logger('paragraphs_live_preview')->notice('Form ID: @form_id', ['@form_id' => $form_id]);
   // Only alter node edit forms
   if (!preg_match('/^node_.*_form$/', $form_id)) {
     return;
   }
-
+  \Drupal::logger('paragraphs_live_preview')->notice('Node form detected: @form_id', ['@form_id' => $form_id]);
   $config = \Drupal::config('paragraphs_live_preview.settings');
 
   if (!$config->get('enabled')) { return; }
 
   // Attach library
+  $form['#attached']['library'][] = 'paragraphs_live_preview/live_preview';
 
   //Add settings to drupalSettings
   $form['#attached']['drupalSettings']['paragraphsLivePreview'] = [

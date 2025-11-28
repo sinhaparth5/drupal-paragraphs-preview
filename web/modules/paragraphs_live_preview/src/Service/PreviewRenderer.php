@@ -11,103 +11,100 @@ use Drupal\Core\Theme\ThemeManagerInterface;
  * Service for rendering preview of paragraphs.
  */
 class PreviewRenderer {
-    /**
-     * The entity type manager.
-     */
-    protected EntityTypeManagerInterface $entityTypeManager;
 
-    /**
-     * The renderer.
-     */
-    protected RendererInterface $renderer;
+  /**
+   * The entity type manager.
+   */
+  protected EntityTypeManagerInterface $entityTypeManager;
 
-    /**
-     * The theme manager.
-     */
-    protected ThemeManagerInterface $themeManager;
+  /**
+   * The renderer.
+   */
+  protected RendererInterface $renderer;
 
-    /**
-     * Constructs a PreviewRenderer object.
-     */
-    public function __construct(
-        EntityTypeManagerInterface $entity_type_manager,
-        RendererInterface $renderer,
-        ThemeManagerInterface $theme_manager
-    ) {
-        $this->entityTypeManager = $entity_type_manager;
-        $this->renderer = $renderer;
-        $this->themeManager = $theme_manager;
+  /**
+   * The theme manager.
+   */
+  protected ThemeManagerInterface $themeManager;
+
+  /**
+   * Constructs a PreviewRenderer object.
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    RendererInterface $renderer,
+    ThemeManagerInterface $theme_manager
+  ) {
+    $this->entityTypeManager = $entity_type_manager;
+    $this->renderer = $renderer;
+    $this->themeManager = $theme_manager;
+  }
+
+  /**
+   * Render preview HTML for a node with form data.
+   */
+  public function renderPreview(EntityInterface $node, array $form_data): string {
+    try {
+      // Get the view builder
+      $view_builder = $this->entityTypeManager->getViewBuilder('node');
+
+      // Build the render array using 'full' view mode
+      $build = $view_builder->view($node, 'full');
+
+      // Add wrapper for styling
+      $wrapper = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['paragraphs-live-preview-wrapper'],
+        ],
+        'content' => $build,
+        '#attached' => [
+          'library' => [
+            'system/base',
+          ],
+        ],
+      ];
+
+      // Render and return HTML
+      $html = $this->renderer->renderRoot($wrapper);
+
+      // Wrap in a complete HTML document
+      $full_html = '<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      background: #fff;
     }
-
-    /**
-     * Render preview HTML for a node with form data
-     */
-    public function renderPreview(EntityInterface $node, array $form_data): string {
-        $this->applyFormData($node, $form_data);
-
-        $view_builder = $this->entityTypeManager->getViewBuilder('node');
-        $build = $view_builder->view($node, 'full');
-
-        $wrapper = [
-            '#type' => 'container',
-            '#attributes' => [
-                'class' => ['paragraphs-live-preview-wrapper'],
-            ],
-            'content' => $build,
-        ];
-
-        return $this->renderer->renderPlain($wrapper);
+    .paragraphs-live-preview-wrapper {
+      max-width: 100%;
     }
-
-    /**
-     * Apply form data to node entity
-     */
-    protected function applyFormData(EntityInterface $node, array $form_data): void {
-        if (isset($form_data['title'])) {
-            $node->setTitle($form_data['title']);
-        }
-
-        foreach ($form_data as $field_name => $field_data) {
-            if ($node->hasField($field_name) && is_array($field_data)) {
-                $field_definition = $node->getFieldDefinition($field_name);
-                if ($field_definition && $field_definition->getType() === 'entity_reference_revisions') {
-                    $this->applyParagraphData($node, $field_name, $field_data);
-                }
-                else {
-                  $node->set($field_name, $field_data);
-                }
-            }
-        }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0;
+      line-height: 1.2;
     }
+  </style>
+</head>
+<body>
+  ' . $html . '
+</body>
+</html>';
 
-    /*
-     * Apply paragraph field data.
-     */
-  protected function applyParagraphData(EntityInterface $node, string $field_name, array $field_data): void {#
-    $paragraph_items = [];
-
-    foreach ($field_data as $delta => $item_data) {
-      if (isset($item_data['target_id'])) {
-        $paragraph = $this->entityTypeManager
-          ->getStorage('paragraph')
-          ->load($item_data['target_id']);
-
-        if ($paragraph) {
-          if (isset($item_data['fields'])) {
-            foreach ($item_data['fields'] as $para_field_name => $para_field_value) {
-              if ($paragraph->hasField($para_field_name)) {
-                $paragraph->set($para_field_name, $para_field_value);
-              }
-            }
-          }
-
-          $paragraph_items[] = $paragraph;
-        }
-      }
+      return $full_html;
     }
+    catch (\Exception $e) {
+      \Drupal::logger('paragraphs_live_preview')->error('Render error: @message', [
+        '@message' => $e->getMessage(),
+      ]);
 
-    if (!empty($paragraph_items)) {
-      $node->set($field_name, $paragraph_items);
+      return '<html><body><h1>Preview Error</h1><p>' . $e->getMessage() . '</p></body></html>';
     }
   }
+
 }

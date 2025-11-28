@@ -9,7 +9,7 @@ paragraphs_live_preview.preview:
     no_cache: true
 
 paragraphs_live_preview.settings:
-  path: '/admin/config/content/paragraphs_live_preview'
+  path: '/admin/config/content/paragraphs-live-preview'
   defaults:
     _form: '\Drupal\paragraphs_live_preview\Form\SettingsForm'
     _title: 'Paragraphs Live Preview Settings'

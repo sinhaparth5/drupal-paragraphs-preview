@@ -10,64 +10,94 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Controller for handling live preview requests
+ * Controller for handling live preview requests.
  */
 class PreviewController extends ControllerBase {
+
   /**
-   * The preview renderer service
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * The preview renderer service.
    *
    * @var \Drupal\paragraphs_live_preview\Service\PreviewRenderer
    */
   protected $previewRenderer;
 
   /**
-   * Constructs a PreviewController object
+   * Constructs a PreviewController object.
    */
   public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
     PreviewRenderer $preview_renderer
   ) {
+    $this->entityTypeManager = $entity_type_manager;
     $this->previewRenderer = $preview_renderer;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): self {
+  public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('entity_type.manager'),
       $container->get('paragraphs_live_preview.renderer')
     );
   }
 
   /**
-   * Generate preview for paragraphs
+   * Generate preview for paragraphs.
    */
   public function preview(Request $request): JsonResponse {
-    $node_id = $request->request->get('node_id');
-    $form_data = $request->request->get('form_data');
-
-    if (empty($form_data)) {
-      return new JsonResponse([
-        'success' => FALSE,
-        'error' => 'No form data provided',
-      ], 400);
-    }
-
     try {
-      if ($node_id) {
+      $node_id = $request->request->get('node_id');
+      $serialized_form = $request->request->get('serialized_form');
+      $node_type = $request->request->get('node_type');
+
+      if (empty($serialized_form)) {
+        return new JsonResponse([
+          'success' => FALSE,
+          'error' => 'No form data provided',
+        ], 400);
+      }
+
+      // Parse the serialized form data
+      parse_str($serialized_form, $form_data);
+
+      // Log for debugging
+      \Drupal::logger('paragraphs_live_preview')->notice('Node ID: @id', ['@id' => $node_id ?? 'none']);
+      \Drupal::logger('paragraphs_live_preview')->notice('Node Type: @type', ['@type' => $node_type ?? 'none']);
+
+      // Clean up node_type (remove -edit suffix if present)
+      $clean_node_type = str_replace('-edit', '', $node_type ?? 'article');
+
+      // Load or create node
+      if (!empty($node_id) && is_numeric($node_id)) {
         $node = $this->entityTypeManager->getStorage('node')->load($node_id);
         if (!$node) {
-          throw new \Exception('Node not found');
+          throw new \Exception("Node with ID {$node_id} not found");
         }
+        \Drupal::logger('paragraphs_live_preview')->notice('Loaded existing node: @id', ['@id' => $node_id]);
       }
       else {
-        $node_type = $form_data['type'] ?? 'article';
+        // Create temporary node for preview
         $node = $this->entityTypeManager->getStorage('node')->create([
-          'type' => $node_type,
-          'title' => $form_data['title'] ?? 'Preview',
+          'type' => $clean_node_type,
+          'title' => 'Preview',
+          'status' => 1,
         ]);
+        \Drupal::logger('paragraphs_live_preview')->notice('Created temporary node of type: @type', ['@type' => $clean_node_type]);
       }
 
-      $rendered_html = $this->previewRenderer->renderPreview($node, (array) $form_data);
+      // Apply form data to node
+      $this->applyFormDataToNode($node, $form_data);
+
+      // Render the preview
+      $rendered_html = $this->previewRenderer->renderPreview($node, $form_data);
 
       return new JsonResponse([
         'success' => TRUE,
@@ -75,7 +105,12 @@ class PreviewController extends ControllerBase {
       ]);
     }
     catch (\Exception $e) {
-      $this->getLogger('paragraphs_live_preview')->error($e->getMessage());
+      \Drupal::logger('paragraphs_live_preview')->error('Preview error: @message', [
+        '@message' => $e->getMessage(),
+      ]);
+      \Drupal::logger('paragraphs_live_preview')->error('Stack trace: @trace', [
+        '@trace' => $e->getTraceAsString(),
+      ]);
 
       return new JsonResponse([
         'success' => FALSE,
@@ -83,4 +118,34 @@ class PreviewController extends ControllerBase {
       ], 500);
     }
   }
+
+  /**
+   * Apply form data to node entity.
+   */
+  protected function applyFormDataToNode($node, array $form_data): void {
+    // Set title
+    if (isset($form_data['title'][0]['value']) && !empty($form_data['title'][0]['value'])) {
+      $node->setTitle($form_data['title'][0]['value']);
+      \Drupal::logger('paragraphs_live_preview')->notice('Set title: @title', [
+        '@title' => $form_data['title'][0]['value'],
+      ]);
+    }
+
+    // Set body
+    if (isset($form_data['body'][0]['value']) && !empty($form_data['body'][0]['value'])) {
+      $node->set('body', [
+        'value' => $form_data['body'][0]['value'],
+        'format' => $form_data['body'][0]['format'] ?? 'basic_html',
+      ]);
+    }
+
+    // Handle other simple fields
+    $simple_fields = ['status', 'promote', 'sticky'];
+    foreach ($simple_fields as $field_name) {
+      if (isset($form_data[$field_name]['value'])) {
+        $node->set($field_name, $form_data[$field_name]['value']);
+      }
+    }
+  }
+
 }
