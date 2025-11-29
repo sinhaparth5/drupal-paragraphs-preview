@@ -1,5 +1,7 @@
 <?php
 
+namespace Drupal\spectre_cpa\Service;
+
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
@@ -201,5 +203,63 @@ class SpectreCPAAuditor {
    */
   public function getComponentData(): array {
     return $this->componentData;
+  }
+
+  /**
+   * Gets performance data for a specific component
+   *
+   * @param string $component_id
+   *  The component identifier
+   *
+   * @return array|null
+   *  Component data or NULL if not found
+   */
+  public function getComponent(string $component_id): ?array {
+    return $this->componentStack[$component_id] ?? NULL;
+  }
+
+  /**
+   * Resets all tracking data.
+   */
+  public function reset() {
+    $this->componentData = [];
+    $this->componentStack = [];
+  }
+
+  /**
+   * Generates a summary report of all components.
+   *
+   * @return array
+   *  Summary statistics.
+   */
+  public function getSummary() {
+    $summary = [
+      'total_components' => count($this->componentData),
+      'total_queries' => 0,
+      'total_time' => 0,
+      'uncacheable_count' => 0,
+      'cacheable_count' => 0,
+      'slowest_components' => [],
+    ];
+
+    foreach ($this->componentData as $component) {
+      $summary['total_queries'] += $component['query_count'] ?? 0;
+      $summary['total_time'] += $component['duration'] ?? 0;
+
+      if (($component['cache_status'] ?? '') === 'uncacheable') {
+        $summary['uncacheable_count']++;
+      } elseif (($component['cache_status'] ?? '') === 'cacheable') {
+        $summary['cacheable_count']++;
+      }
+    }
+
+    // Find slowest components
+    $sorted = $this->componentData;
+    usort($sorted, function($a, $b) {
+      return ($b['duration'] ?? 0) <=> ($a['duration'] ?? 0);
+    });
+    $summary['slowest_components'] = array_slice($sorted, 0 , 10);
+
+    return $summary;
   }
 }
