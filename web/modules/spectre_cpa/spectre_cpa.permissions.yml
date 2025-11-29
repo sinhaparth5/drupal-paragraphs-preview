@@ -1,0 +1,8 @@
+administer cpa:
+  title: 'Administer Component Performance Auditor'
+  description: 'Enable performance overlay and access performance audit data'
+  restrict access: true
+
+view cpa reports:
+  title: 'View CPA performance reports'
+  description: 'View component performance reports without administrative access'

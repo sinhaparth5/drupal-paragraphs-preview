@@ -1,0 +1,8 @@
+services:
+  spectre_cpa.query_logger:
+    class: Drupal\spectre_cpa\Service\QueryLogger
+    arguments: ['@database']
+
+  spectre_cpa.cache_tracker:
+    class: Drupal\spectre_cpa\Service\CacheTracker
+    arguments: ['@cache.render', '@cache_tags.invalidator']

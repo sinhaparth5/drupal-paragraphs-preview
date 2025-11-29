@@ -1,0 +1,7 @@
+name: 'Spectre Component Performance Auditor'
+type: module
+description: 'Visual performance attribution tool that maps database queries, cache behaviour, and frontend metrics to specific page components'
+package: Performance
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:system

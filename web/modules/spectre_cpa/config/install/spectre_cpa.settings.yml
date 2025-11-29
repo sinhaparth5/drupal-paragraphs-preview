@@ -1,0 +1,10 @@
+enable_overlay: true
+enable_query_logging: false
+slow_query_threshold: 50
+cache_analysis: true
+component_types:
+  - block
+  - view
+  - sdc
+max_components: 100
+sample_rate: 100

@@ -1,0 +1,118 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall function for CPA module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function spectre_cpa_install() {
+  \Drupal::messenger()->addStatus(t('Spectre CPA has installed. Visit the <a href="@settings">settings page</a> to configure.', ['@settings' => \Drupal\Core\Url::fromRoute('spectre_cpa.settings')->toString(),]));
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function spectre_cpa_uninstall() {
+  // Clean up any configuration
+  \Drupal::configFactory()->getEditable('spectre_cpa.settings')->delete();
+}
+
+/**
+ * Implements hook_requirements()
+ */
+function spectre_cpa_requirements($phase) {
+  $requirements = [];
+
+  if ($phase === 'runtime') {
+    $config = \Drupal::config('spectre_cpa.settings');
+    // Check if query logging is enabled.
+    if ($config->get('enabled_query_logging')) {
+      $requirements['spectre_cpa_query_logging'] = [
+        'title' => t('Spectre CPA Query Logging'),
+        'value' => t('Enable'),
+        'description' => t('Detailed query logging is enabled. This may impact performance on high-traffic sites.'),
+        'severity' => REQUIREMENT_WARNING,
+      ];
+    }
+
+    // Check database logger.
+    $database = \Drupal::database();
+    if (!$database->getLogger()) {
+      $requirements['spectre_cpa_query_logging'] = [
+        'title' => t('Spectre CPA Database Logging'),
+        'value' => t('Not available'),
+        'description' => t('Database query logging is not available. Some CPA features may not work correctly.'),
+        'severity' => REQUIREMENT_WARNING,
+      ];
+    }
+  }
+  return $requirements;
+}
+
+/**
+ * Implements hook_schema()
+ */
+function spectre_cpa_schema() {
+  $schema = [];
+
+  // Add a table for storing historical performance data.
+  $schema['spectre_cpa_performance_log'] = [
+    'description' => 'Stores historical component performance data.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary key: Unique log ID',
+      ],
+      'component_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Component identifier',
+      ],
+      'component_type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'Component type (block, view, etc)',
+      ],
+      'duration' => [
+        'type' => 'float',
+        'not null' => TRUE,
+        'description' => 'Rendering duration in milliseconds',
+      ],
+      'query_count' => [
+        'type' => 'int',
+        'length' => 32,
+        'not null' => FALSE,
+        'description' => 'Number of database queries',
+      ],
+      'cache_status' => [
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'description' => 'Cache status (hit, miss, uncacheable)',
+      ],
+      'timestamp' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Timestamp used to store queries',
+      ],
+      'url' => [
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => FALSE,
+        'description' => 'URL where component was rendered',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'component_id' => ['component_id'],
+      'component_type' => ['component_type'],
+      'timestamp' => ['timestamp'],
+    ]
+  ];
+  return $schema;
+}
