@@ -1,4 +1,8 @@
 services:
+  spectre_cpa.auditor:
+    class: Drupal\spectre_cpa\Service\SpectreCPAAuditor
+    arguments: ['@database', '@cache.render', '@current_user', '@config.factory', '@module_handler']
+
   spectre_cpa.query_logger:
     class: Drupal\spectre_cpa\Service\QueryLogger
     arguments: ['@database']
