@@ -4,3 +4,148 @@
  * @file
  * Primary module hooks for Spectre Component Performance Auditor module.
  */
+
+use Drupal\Core\Block\BlockPluginInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_page_attachments().
+ */
+function spectre_cpa_page_attachments(array &$attachments) {
+  $user = \Drupal::currentUser();
+
+  // Only attach overlay for users with permission
+  if ($user->hasPermission('administer cpa')) {
+    $config = \Drupal::config('spectre_cpa.settings');
+
+    if ($config->get('enable_overlay') !== FALSE) {
+      $attachments['#attached']['library'][] = 'spectre_cpa/overlay';
+    }
+  }
+}
+
+/**
+ * Implements hook_theme()
+ */
+function spectre_cpa_theme($existing, $type, $theme, $path) {
+  return [
+    'cpa_dashboard' => [
+      'variables' => [
+        'summary' => [],
+        'components' => [],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for blocks
+ */
+function spectre_cpa_preprocess_block(&$variables) {
+  $auditor = \Drupal::service('spectre_cpa.auditor');
+
+  if (!$auditor->isEnabled()) { return; }
+
+  $block = $variables['elements']['#block'] ?? NULL;
+  if (!$block) { return; }
+
+  $component_id = 'block-' . $block->id();
+  $component_label = $block->label();
+  $component_type = 'block';
+
+  // Start tracking this component
+  $auditor->startComponent($component_id, $component_type, $component_label);
+
+  // Add attributes for Javascript targeting
+  $variables['attributes']['data-cpa-id'] = $component_id;
+  $variables['attributes']['data-cpa-type'] = $component_type;
+}
+
+/**
+ * Implements hook_block_view_alter().
+ */
+function spectre_cpa_block_view_alter(array &$build, BlockPluginInterface $block) {
+  $auditor = \Drupal::service('spectre_cpa.auditor');
+
+  if (!$auditor->isEnabled()) { return; }
+
+  $component_id = 'block-' . $block->getPluginId();
+
+  // Extract cache metadata
+  $cache_metadata = [
+    'tags' => $build['#cache']['tags'] ?? [],
+    'contexts' => $build['#cache']['contexts'] ?? [],
+    'max-age' => $build['#cache']['max-age'] ?? NULL,
+  ];
+
+  // Stop tracking and record final metrics
+  $auditor->stopComponent($component_id, $cache_metadata);
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for views
+ */
+function spectre_cpa_preprocess_views_view(&$variables) {
+  $auditor = \Drupal::service('spectre_cpa.auditor');
+
+  if (!$auditor->isEnabled()) { return; }
+
+  $view = $variables['view'];
+  $component_id = 'view-' . $view->id() . '-' . $view->current_display;
+  $component_label = $view->storage->label() . ' (' . $view->current_display . ')';
+  $component_type = 'view';
+
+  // Start tracking.
+  $auditor->startComponent($component_id, $component_type, $component_label);
+
+  // Add attributes
+  $variables['attributes']['data-cpa-id'] = $component_id;
+  $variables['attributes']['data-cpa-type'] = $component_type;
+}
+
+/**
+ * Implements hook_views_post_render()
+ */
+function spectre_cpa_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
+  $auditor = \Drupal::service('spectre_cpa.auditor');
+
+  if (!$auditor->isEnabled()) { return; }
+
+  $component_id = 'view-' . $view->id() . '-' . $view->current_display;
+
+  // Extract cache metadata
+  $cache_metadata = [
+    'tags' => $output['#cache']['tags'] ?? [],
+    'contexts' => $output['#cache']['contexts'] ?? [],
+    'max-age' => $output['#cache']['max-age'] ?? NULL,
+  ];
+
+  $auditor->stopComponent($component_id, $cache_metadata);
+}
+
+/**
+ * Implements hook_help().
+ */
+function spectre_cpa_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.cpa':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Component Performance Auditor (CPA) provides visual performance attribution for Drupal components. It tracks database queries, cache behavior, and rendering time for blocks, views, and other components.') . '</p>';
+      $output .= '<h3>' . t('Features') . '</h3>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('Visual overlay showing performance metrics for each component') . '</li>';
+      $output .= '<li>' . t('Database query tracking and analysis') . '</li>';
+      $output .= '<li>' . t('Cache hit/miss visualization') . '</li>';
+      $output .= '<li>' . t('Performance dashboard with component rankings') . '</li>';
+      $output .= '</ul>';
+      $output .= '<h3>' . t('Usage') . '</h3>';
+      $output .= '<p>' . t('Users with the "administer cpa" permission will see a performance overlay on pages. Hover over components to see detailed performance metrics.') . '</p>';
+      $output .= '<p>' . t('Visit the <a href="@dashboard">performance dashboard</a> to see a summary of all components.', [
+          '@dashboard' => Url::fromRoute('cpa.dashboard')->toString(),
+        ]) . '</p>';
+      return $output;
+  }
+}

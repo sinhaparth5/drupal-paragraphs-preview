@@ -1,0 +1,22 @@
+overlay:
+  css:
+    theme:
+      css/cpa-overlay.css: {}
+  js:
+    js/cpa-overlay.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+    - core/once
+
+dashboard:
+  css:
+    theme:
+      css/cpa-dashboard.css: {}
+  js:
+    js/cpa-dashboard.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once

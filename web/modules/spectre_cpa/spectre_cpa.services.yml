@@ -10,3 +10,9 @@ services:
   spectre_cpa.cache_tracker:
     class: Drupal\spectre_cpa\Service\CacheTracker
     arguments: ['@cache.render', '@cache_tags.invalidator']
+
+  spectre_cpa.render_subscriber:
+    class: Drupal\spectre_cpa\EventSubscriber\RenderSubscriber
+    arguments: ['@spectre_cpa.auditor', '@current_user']
+    tags:
+      - { name: event_subscriber }
