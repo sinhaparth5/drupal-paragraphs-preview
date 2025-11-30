@@ -900,3 +900,9 @@ $databases['default']['default'] = array (
   'autoload' => 'core/modules/sqlite/src/Driver/Database/sqlite/',
 );
 $settings['config_sync_directory'] = 'sites/default/files/config_w46dfwCbufWsqIIwKjthcP5moQD8PnwxX8emmwCQfitDVC08qFfvWrM14qoTGa2F1mSzfQ9Ntw/sync';
+
+// Automatically generated include for settings managed by ddev.
+$ddev_settings = __DIR__ . '/settings.ddev.php';
+if (getenv('IS_DDEV_PROJECT') == 'true' && is_readable($ddev_settings)) {
+  require $ddev_settings;
+}

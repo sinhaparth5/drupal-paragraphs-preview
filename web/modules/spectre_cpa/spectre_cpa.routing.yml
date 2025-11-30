@@ -1,0 +1,33 @@
+spectre_cpa.settings:
+  path: '/admin/config/development/spectre-cpa'
+  defaults:
+    _form: '\Drupal\spectre_cpa\Form\SpectreCPASettingsForm'
+    _title: 'Spectre CPA Settings'
+  requirements:
+    _permission: 'administer cpa'
+
+spectre_cpa.dashboard:
+  path: '/admin/reports/spectre-cpa'
+  defaults:
+    _controller: '\Drupal\spectre_cpa\Controller\CPADashboardController::dashboard'
+    _title: 'Performance Dashboard'
+  requirements:
+    _permission: 'view cpa reports+administer cpa'
+
+spectre_cpa.api.component_data:
+  path: '/spectre-cpa/api/component/{component_id}'
+  defaults:
+    _controller: '\Drupal\spectre_cpa\Controller\CPAApiController::componentData'
+  requirements:
+    _permission: 'administer cpa'
+  options:
+    no_cache: true
+
+spectre_cpa.api.page_data:
+  path: '/spectre-cpa/api/page-data'
+  defaults:
+    _controller: '\Drupal\spectre_cpa\Controller\CPAApiController::pageData'
+  requirements:
+    _permission: 'administer cpa'
+  options:
+    no_cache: true

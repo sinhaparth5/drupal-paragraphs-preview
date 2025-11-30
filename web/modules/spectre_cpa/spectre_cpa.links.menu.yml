@@ -1,0 +1,13 @@
+spectre_cpa.settings:
+  title: 'Spectre CPA'
+  description: 'Configure CPA performance tracking settings.'
+  route_name: spectre_cpa.settings
+  parent: system.admin_config_development
+  weight: 10
+
+spectre_cpa.dashboard:
+  title: 'Spectre Performance Dashboard'
+  description: 'View component performance metrics and analysis'
+  route_name: spectre_cpa.dashboard
+  parent: system:admin_reports
+  weight: 10

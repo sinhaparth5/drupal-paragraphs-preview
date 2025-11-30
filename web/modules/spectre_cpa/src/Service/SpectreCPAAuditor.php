@@ -125,12 +125,21 @@ class SpectreCPAAuditor {
   public function startComponent(string $component_id, string $component_type, string $component_label) {
     if (!$this->enabled) { return; }
     $this->componentStack[] = $component_id;
+
+    // Get current query count from logger if available.
+    $start_query_count = 0;
+    $logger = $this->database->getLogger();
+    if ($logger) {
+      $queries = $logger->get('default');
+      $start_query_count = is_array($queries) ? count($queries) : 0;
+    }
+
     $this->componentData[$component_id] = [
       'id' => $component_id,
       'type' => $component_type,
       'label' => $component_label,
       'start_time' => microtime(TRUE),
-      'start_query_count' => $this->database->queryCount(),
+      'start_query_count' => $start_query_count,
       'queries' => [],
       'cache_status' => 'unknown',
       'cache_tags' => [],
